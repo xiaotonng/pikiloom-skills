@@ -1,6 +1,6 @@
 ---
 name: image-gen
-description: Generate or edit images with OpenAI gpt-image-2 — text-to-image and reference-image (image-to-image / edit / restyle / combine) modes. Use when the user wants to create or modify images: logos, icons, illustrations, mockups, product shots, transparent-background assets, social/marketing graphics, or edit/extend/restyle an existing image. Atomic, scriptable, stdlib-only (no pip installs).
+description: Generate or edit images with OpenAI gpt-image-2 — text-to-image and reference-image (image-to-image / edit / restyle / combine) modes. Use when the user wants to create or modify images such as logos, icons, illustrations, mockups, product shots, transparent-background assets, and social/marketing graphics, or edit/extend/restyle an existing image. Atomic, scriptable, stdlib-only (no pip installs).
 ---
 
 # image-gen — gpt-image-2 image generation (atomic capability)
