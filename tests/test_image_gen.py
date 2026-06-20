@@ -7,9 +7,10 @@ OpenAI key and is covered by the manual examples in the SKILL, not unit tests.)
 
 import argparse
 import base64
+import contextlib
 import importlib.util
+import io
 import os
-import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -20,12 +21,18 @@ image_gen = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(image_gen)
 
 
+def _save_quiet(resp, out):
+    """save_images prints 'saved <path>' — swallow it so test output stays clean."""
+    with contextlib.redirect_stdout(io.StringIO()):
+        return image_gen.save_images(resp, out)
+
+
 class SaveImagesTests(unittest.TestCase):
     def test_single_image_keeps_name(self):
         with tempfile.TemporaryDirectory() as d:
             out = str(Path(d) / "o.png")
             resp = {"data": [{"b64_json": base64.b64encode(b"PNGDATA").decode()}]}
-            paths = image_gen.save_images(resp, out)
+            paths = _save_quiet(resp, out)
             self.assertEqual([Path(p).name for p in paths], ["o.png"])
             self.assertEqual(Path(out).read_bytes(), b"PNGDATA")
 
@@ -34,7 +41,7 @@ class SaveImagesTests(unittest.TestCase):
             out = str(Path(d) / "o.png")
             b64 = base64.b64encode(b"X").decode()
             resp = {"data": [{"b64_json": b64}, {"b64_json": b64}]}
-            paths = image_gen.save_images(resp, out)
+            paths = _save_quiet(resp, out)
             self.assertEqual(sorted(Path(p).name for p in paths), ["o_1.png", "o_2.png"])
 
     def test_empty_response_exits(self):

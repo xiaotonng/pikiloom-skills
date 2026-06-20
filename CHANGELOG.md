@@ -21,7 +21,7 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **CI** — a GitHub Actions workflow that byte-compiles every skill, runs the test
   suite, and runs the zero-key `tech-intel --demo` smoke on Python 3.10–3.13.
 - **Project docs & templates** — `CONTRIBUTING.md`, `TESTING.md`, `SECURITY.md`,
-  issue forms, and a pull-request template.
+  `CODE_OF_CONDUCT.md`, issue forms, and a pull-request template.
 
 ### Fixed
 - `.gitignore` now ignores the machine-local `.claude/` and `.agents/` install
