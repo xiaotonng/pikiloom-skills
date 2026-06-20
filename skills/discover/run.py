@@ -27,6 +27,7 @@ from adapters.defaults import (                          # noqa: E402
     FileSource,
     HeuristicScorer,
     JsonKnowledgeStore,
+    NullStore,
     OpenRouterLLM,
     StdoutPublisher,
 )
@@ -118,7 +119,8 @@ def main() -> None:
         scorer=HeuristicScorer(),
         persona=persona,
         publisher=publisher,
-        store=JsonKnowledgeStore(),
+        # demo stays idempotent (no memory); real runs keep cross-run dedup
+        store=NullStore() if args.demo else JsonKnowledgeStore(),
         lint_policy=lp,
         config=pc,
     )
