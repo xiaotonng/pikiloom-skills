@@ -1,0 +1,30 @@
+# discover — example run config. Copy + edit; pass with `run.py --config`.
+
+# How many of each content type to aim for (keys must match persona.content_types).
+min_per_type:
+  post: 2
+  quote: 3
+  reply: 0
+
+target_total: 5        # 0 = sum(min_per_type)
+hard_min_total: 1      # abort (don't publish) below this many clean outputs
+shortlist_size: 12     # cap candidates handed to the drafter
+
+# LLM (OpenRouter model id). Key resolves from $OPENROUTER_API_KEY or ~/.pikiloom/skills.env.
+model: google/gemini-2.5-pro
+temperature: 0.4
+reasoning: medium
+
+# Content type buckets the persona emits (JSON keys in the LLM response).
+content_types: [post, quote, reply]
+
+# Lint guardrail. Structural checks (unsourced numbers/handles, dropped negation,
+# thin content) are always on. These lexical lists are project-specific — keep
+# your real banned-phrase list private; these are a small neutral illustration.
+lint:
+  banned_phrases: ["game-changer", "revolutionary", "blazing fast", "10x your"]
+  first_person_markers: ["we're excited", "we are thrilled", "我们的产品", "我们刚刚"]
+  max_line_chars: 60
+  require_source_trace: true
+  min_post_chars: 30
+  min_quote_chars: 15

@@ -1,0 +1,30 @@
+# ── Secrets — NEVER commit ───────────────────────────────────────────────────
+.env
+*.env
+# (.env.example is kept: it does not match the patterns above)
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# ── Skill runtime artifacts (generated, not source) ──────────────────────────
+data/
+out/
+output/
+narration/
+edit/
+*.tmp
+*.webm
+*.mp4
+*.aiff
+
+# ── OS / editor ──────────────────────────────────────────────────────────────
+.DS_Store
+*.swp
+.idea/
+.vscode/
+node_modules/
