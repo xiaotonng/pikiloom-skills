@@ -1,6 +1,6 @@
 """Runnable reference adapters.
 
-These make ``discover`` work standalone (file in → file/stdout out) and double as
+These make ``tech-intel`` work standalone (file in → file/stdout out) and double as
 copy-paste templates for real adapters. Nothing here is project-specific.
 """
 
@@ -168,7 +168,7 @@ class HeuristicScorer:
 
 class StdoutPublisher:
     def publish(self, *, report_md: str, outputs: list[Output], run_id: str) -> dict[str, Any]:
-        print("\n" + "=" * 60 + f"\nDISCOVER REPORT · {run_id}\n" + "=" * 60)
+        print("\n" + "=" * 60 + f"\nTECH-INTEL REPORT · {run_id}\n" + "=" * 60)
         print(report_md)
         return {"ok": True, "sink": "stdout"}
 
@@ -209,10 +209,10 @@ class NullStore:
 
 class JsonKnowledgeStore:
     """File-backed memory: a posted-keys set + a blacklist + a lessons log, under
-    a directory (default ~/.pikiloom/discover-memory). Enough for cross-run dedup
+    a directory (default ~/.pikiloom/tech-intel-memory). Enough for cross-run dedup
     standalone; replace with your own KB (wiki/db) when embedding."""
 
-    def __init__(self, root: str | os.PathLike[str] = "~/.pikiloom/discover-memory") -> None:
+    def __init__(self, root: str | os.PathLike[str] = "~/.pikiloom/tech-intel-memory") -> None:
         self.root = Path(root).expanduser()
         self.root.mkdir(parents=True, exist_ok=True)
         self._posted = self.root / "posted.json"

@@ -1,6 +1,6 @@
 """Guardrail — the drafter's anti-fabrication / anti-fluff pass.
 
-Adapted from an internal discover pipeline's lint stage. The valuable, reusable part is
+Adapted from an internal signal pipeline's lint stage. The valuable, reusable part is
 the set of *structural* checks that keep generated content honest:
 
   - unsourced entities: numbers / @handles in the draft must appear in the source

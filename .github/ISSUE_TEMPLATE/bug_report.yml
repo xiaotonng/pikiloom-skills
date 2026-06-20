@@ -1,0 +1,48 @@
+name: Bug report
+description: Something in a skill doesn't behave as documented.
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: skill
+    attributes:
+      label: Which skill?
+      options:
+        - image-gen
+        - video-use
+        - tech-intel
+        - repo / tooling (CI, install, docs)
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you run, and what did it do instead of what you expected?
+      placeholder: |
+        Command:  python3 ~/.claude/skills/tech-intel/run.py --demo
+        Expected: a linted report
+        Got:      <error / wrong output>
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: The minimal sequence that triggers it. Redact any API keys.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "macOS 15.3 · Python 3.12.4 · ffmpeg 7.1 (video-use only)"
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before filing
+      options:
+        - label: I removed any API keys / secrets from the logs above.
+          required: true
+        - label: I'm on the latest commit of the default branch.

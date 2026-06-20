@@ -1,0 +1,25 @@
+name: Feature request / new skill
+description: Propose an improvement to a skill, or a new atomic skill.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The task, not the solution. "I want to … and today I have to …".
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: >
+        Sketch the command(s) and output. New skills should stay atomic,
+        scriptable, and honest about dependencies/keys — see CONTRIBUTING.md.
+    validations:
+      required: true
+  - type: input
+    id: keys
+    attributes:
+      label: Keys / dependencies it would need
+      placeholder: "none · or: OPENROUTER_API_KEY · ffmpeg · a pip package"

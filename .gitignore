@@ -2,7 +2,6 @@
 .env
 *.env
 # (.env.example is kept: it does not match the patterns above)
-
 # ── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
@@ -10,7 +9,6 @@ __pycache__/
 venv/
 *.egg-info/
 .pytest_cache/
-
 # ── Skill runtime artifacts (generated, not source) ──────────────────────────
 data/
 out/
@@ -21,10 +19,19 @@ edit/
 *.webm
 *.mp4
 *.aiff
-
 # ── OS / editor ──────────────────────────────────────────────────────────────
 .DS_Store
 *.swp
 .idea/
 .vscode/
 node_modules/
+.pikiloom/*
+!.pikiloom/skills/
+!.pikiloom/skills/**
+# ── Local agent scaffolding (Claude Code / Codex symlink bridges) ────────────
+.claude/
+.agents/
+# ── Personal, un-shared project skill (real path under .pikiloom/skills) ──────
+# .pikiloom/skills/** is tracked above; re-ignore this dev-only deploy tool so a
+# `git add -A` (incl. the push skill itself) never commits or publishes it.
+.pikiloom/skills/push/

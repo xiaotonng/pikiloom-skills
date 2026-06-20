@@ -1,4 +1,4 @@
-"""Data contracts for the discover pipeline.
+"""Data contracts for the tech-intel pipeline.
 
 The pipeline passes plain ``dict`` rows internally (cheap to serialize to JSONL,
 trivial for adapters to produce). The TypedDicts below document the shape; the

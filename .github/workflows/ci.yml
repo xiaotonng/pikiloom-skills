@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Syntax-check every skill + test file. compileall does not import, so the
+      # skills' optional third-party deps (playwright, pillow, requests, pyyaml)
+      # are not needed here.
+      - name: Byte-compile (syntax check, no dependencies)
+        run: python -m compileall -q skills tests
+
+      # The whole suite is stdlib-only by design — no pip install step.
+      - name: Run tests (stdlib unittest)
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+
+      # The exact zero-key command the README advertises must work end to end.
+      - name: tech-intel zero-key demo smoke
+        run: |
+          python skills/tech-intel/run.py --demo \
+            --data-dir "$RUNNER_TEMP/data" --out-dir "$RUNNER_TEMP/out"

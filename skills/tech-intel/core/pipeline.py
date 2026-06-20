@@ -3,7 +3,7 @@
   collect → score/shortlist → draft → lint (drop hard-fails, enforce floor)
           → persist artifacts → publish (non-blocking) → sediment to store
 
-Adapted from an internal discover pipeline's orchestrator + lint policy, dependency-inverted:
+Adapted from an internal signal pipeline's orchestrator + lint policy, dependency-inverted:
 the pipeline imports only the adapter Protocols, never a concrete project module.
 """
 
@@ -43,7 +43,7 @@ class RunResult:
     published: dict[str, Any] | None
 
 
-class DiscoverPipeline:
+class TechIntelPipeline:
     def __init__(
         self,
         *,

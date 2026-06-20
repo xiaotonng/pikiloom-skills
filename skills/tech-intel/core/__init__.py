@@ -1,4 +1,4 @@
-"""discover — an embeddable signal pipeline.
+"""tech-intel — an embeddable signal pipeline.
 
 collect (SourceCollector) → score (Scorer) → draft (one LLM call) → lint
 (guardrail) → publish (Publisher), with a KnowledgeStore for cross-run memory.
@@ -21,7 +21,7 @@ from .adapters import (
     Persona,
     LintPolicy,
 )
-from .pipeline import DiscoverPipeline, PipelineConfig
+from .pipeline import TechIntelPipeline, PipelineConfig
 
 __all__ = [
     "Item",
@@ -37,6 +37,6 @@ __all__ = [
     "UsageMeter",
     "Persona",
     "LintPolicy",
-    "DiscoverPipeline",
+    "TechIntelPipeline",
     "PipelineConfig",
 ]

@@ -1,4 +1,4 @@
-# discover — example run config. Copy + edit; pass with `run.py --config`.
+# tech-intel — example run config. Copy + edit; pass with `run.py --config`.
 
 # How many of each content type to aim for (keys must match persona.content_types).
 min_per_type:

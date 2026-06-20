@@ -1,7 +1,7 @@
 """Draft step — render the prompt, make ONE LLM call (with a JSON-retry), parse
 the structured result into Output rows, and build the report.
 
-Adapted from an internal discover pipeline's merge/report stage. The host-specific
+Adapted from an internal signal pipeline's merge/report stage. The host-specific
 style normalizers (number verification, de-personalization, etc.) are NOT here —
 they belong in a project's drafter extension. The generic, reusable parts are the
 prompt templating, the tolerant JSON parse + one retry, and the report builder.
@@ -179,7 +179,7 @@ def _topics_from_items(items: list[Item]) -> list[str]:
 
 
 def build_report(outputs: list[Output], content_types: tuple[str, ...]) -> str:
-    lines = ["# Discover Report", ""]
+    lines = ["# Tech-Intel Report", ""]
     for ct in content_types:
         bucket = [o for o in outputs if str(o.get("content_type", "")) == ct]
         if not bucket:

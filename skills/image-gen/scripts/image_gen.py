@@ -11,8 +11,9 @@ No third-party deps: pure Python stdlib (urllib multipart hand-rolled).
 Key resolution, first hit wins:
   --api-key  >  $OPENAI_API_KEY  >  --env-file's OPENAI_API_KEY
             >  $IMAGE_GEN_ENV_FILE's OPENAI_API_KEY  >  ~/.pikiloom/skills.env
-Use a DIRECT OpenAI key (sk-... / sk-svcacct-...), NOT an OpenRouter key:
-OpenRouter may block OpenAI image models by data policy.
+Use a DIRECT OpenAI key (sk-... / sk-svcacct-...), NOT an OpenRouter key: this script
+calls OpenAI's native Images API (/v1/images/*), which OpenRouter doesn't expose
+(it does image generation via /chat/completions image output).
 """
 import argparse, base64, json, mimetypes, os, pathlib, sys, urllib.request, urllib.error, uuid
 

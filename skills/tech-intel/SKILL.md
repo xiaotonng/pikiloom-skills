@@ -1,9 +1,9 @@
 ---
-name: discover
+name: tech-intel
 description: Embeddable signal pipeline — collect items from any source → score/shortlist → draft on-brand content with ONE LLM call → lint guardrail (anti-fabrication, source-traceable) → publish. Ships runnable file-in/file-out reference adapters and plugs into your own source / voice / sink via small adapter shims. Use when the user wants to monitor sources and turn them into reviewed, source-traceable drafts (social posts, digests, briefings) — never auto-posting, only drafts.
 ---
 
-# discover — an embeddable signal pipeline
+# tech-intel — an embeddable signal pipeline
 
 `collect → score → draft (one LLM call) → lint → publish`, with a `KnowledgeStore`
 for cross-run memory. The pipeline is **source/voice/sink-agnostic**: every
@@ -19,7 +19,7 @@ reviewed, traceable content → push a draft somewhere*.
 ## Quickstart (zero-key demo)
 
 ```bash
-SKILL=~/.claude/skills/discover
+SKILL=~/.claude/skills/tech-intel
 python3 "$SKILL/run.py" --demo          # file in → linted report out, NO api key
 ```
 
@@ -72,11 +72,11 @@ banned list private**; the shipped defaults are a small neutral illustration.
 | Var | Used by | Notes |
 |-----|---------|-------|
 | `OPENROUTER_API_KEY` | `OpenRouterLLM` | env or `~/.pikiloom/skills.env`; not needed for `--demo` |
-| `DISCOVER_DATA_DIR` | run artifacts | defaults to `./data/discover` |
+| `TECH_INTEL_DATA_DIR` | run artifacts | defaults to `./data/tech-intel` |
 | publisher creds (e.g. `FEISHU_APP_ID/SECRET/RECEIVE_ID`) | your `Publisher` | only if you wire that sink |
 
 ## Embedding it in a real project
 
 The standalone runner is the worked example. To embed (your own Twitter/RSS source,
 your brand voice, a Feishu/Slack sink, a wiki-backed memory), implement the adapters
-and call `DiscoverPipeline(...).run(...)`. See **EMBEDDING.md** for copy-paste shims.
+and call `TechIntelPipeline(...).run(...)`. See **EMBEDDING.md** for copy-paste shims.

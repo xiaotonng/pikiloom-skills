@@ -1,7 +1,7 @@
-"""Run-scoped artifact IO — atomic writes, JSONL helpers, run discovery.
+"""Run-scoped artifact IO — atomic writes, JSONL helpers, run listing.
 
-Adapted from an internal discover pipeline's run IO and generalized: the data root is
-configurable (``DISCOVER_DATA_DIR`` env, else ``./data/discover``) instead of
+Adapted from an internal signal pipeline's run IO and generalized: the data root is
+configurable (``TECH_INTEL_DATA_DIR`` env, else ``./data/tech-intel``) instead of
 hard-wired to a project tree.
 """
 
@@ -17,10 +17,10 @@ from .schemas import RunPaths
 
 
 def data_dir() -> Path:
-    return Path(os.environ.get("DISCOVER_DATA_DIR", "data/discover")).expanduser()
+    return Path(os.environ.get("TECH_INTEL_DATA_DIR", "data/tech-intel")).expanduser()
 
 
-def build_run_id(prefix: str = "discover") -> str:
+def build_run_id(prefix: str = "tech-intel") -> str:
     return f"{prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
 

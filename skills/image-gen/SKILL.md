@@ -40,8 +40,9 @@ Resolved in order: `--api-key` → `$OPENAI_API_KEY` → `--env-file <dotenv>` �
 echo 'OPENAI_API_KEY=sk-...' >> ~/.pikiloom/skills.env
 ```
 
-> Use a **DIRECT** OpenAI key (`sk-...` / `sk-svcacct-...`), **not** an OpenRouter key: OpenRouter
-> blocks OpenAI image models by data policy (`404 … data policy`). gpt-image-2 needs the direct key.
+> Use a **DIRECT** OpenAI key (`sk-...` / `sk-svcacct-...`), **not** an OpenRouter key: this wrapper
+> calls OpenAI's native Images API (`/v1/images/*`), which OpenRouter doesn't expose (it does image
+> generation via `/chat/completions` image output). gpt-image-2 needs the direct key.
 
 ## Prompting tips (these matter a lot)
 

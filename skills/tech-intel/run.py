@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""discover — standalone runner wiring the reference adapters.
+"""tech-intel — standalone runner wiring the reference adapters.
 
 This is the zero-config entry point: file in → drafted, linted report out. It is
 also the worked example for embedding (see EMBEDDING.md) — swap any adapter for
@@ -20,7 +20,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))  # make `core` and `adapters` importable however we're invoked
 
 from core.adapters import LintPolicy, Persona          # noqa: E402
-from core.pipeline import DiscoverPipeline, PipelineConfig  # noqa: E402
+from core.pipeline import TechIntelPipeline, PipelineConfig  # noqa: E402
 from adapters.defaults import (                          # noqa: E402
     CannedLLM,
     FilePublisher,
@@ -80,7 +80,7 @@ def _demo_canned(items_path: Path) -> str:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Run the discover pipeline with the reference adapters.")
+    ap = argparse.ArgumentParser(description="Run the tech-intel pipeline with the reference adapters.")
     ap.add_argument("--items", default=str(HERE / "examples" / "items.sample.jsonl"), help="JSONL of candidate items")
     ap.add_argument("--config", default=str(HERE / "config.example.yaml"), help="run config YAML")
     ap.add_argument("--persona", default=str(HERE / "prompts" / "persona.example.md"))
@@ -88,14 +88,14 @@ def main() -> None:
     ap.add_argument("--demo", action="store_true", help="use a zero-key CannedLLM (no OPENROUTER_API_KEY needed)")
     ap.add_argument("--model", help="override the LLM model id")
     ap.add_argument("--out-dir", default="out", help="FilePublisher output dir")
-    ap.add_argument("--data-dir", help="run-artifact root (sets DISCOVER_DATA_DIR)")
+    ap.add_argument("--data-dir", help="run-artifact root (sets TECH_INTEL_DATA_DIR)")
     ap.add_argument("--no-publish", action="store_true")
     ap.add_argument("--stdout", action="store_true", help="publish to stdout instead of a file")
     args = ap.parse_args()
 
     if args.data_dir:
         import os
-        os.environ["DISCOVER_DATA_DIR"] = args.data_dir
+        os.environ["TECH_INTEL_DATA_DIR"] = args.data_dir
 
     cfg = _load_yaml(Path(args.config)) if Path(args.config).exists() else {}
     pc, lp, content_types = _build_config(cfg)
@@ -113,7 +113,7 @@ def main() -> None:
     llm = CannedLLM(_demo_canned(items_path)) if args.demo else OpenRouterLLM(model=pc.model or "google/gemini-2.5-pro")
     publisher = StdoutPublisher() if args.stdout else FilePublisher(args.out_dir)
 
-    pipeline = DiscoverPipeline(
+    pipeline = TechIntelPipeline(
         llm=llm,
         source=FileSource(items_path),
         scorer=HeuristicScorer(),
@@ -126,7 +126,7 @@ def main() -> None:
     )
 
     result = pipeline.run(spec={"items_path": str(items_path)}, publish=not args.no_publish)
-    print(f"✓ discover run {result.run_id}")
+    print(f"✓ tech-intel run {result.run_id}")
     print(f"  outputs : {len(result.outputs)} clean (dropped {result.meta['dropped_by_lint']} by lint)")
     print(f"  run dir : {result.run_dir}")
     if result.published:

@@ -1,15 +1,15 @@
-# Embedding `discover` in your project
+# Embedding `tech-intel` in your project
 
 The core imports **none** of your code — it depends only on the adapter Protocols
 in `core/adapters.py`. To embed it you write thin shims around what you already
-have and hand them to `DiscoverPipeline`. Nothing here is a rewrite; each adapter
+have and hand them to `TechIntelPipeline`. Nothing here is a rewrite; each adapter
 is a small wrapper over an existing function/class.
 
 Make `core` / `adapters` importable from your project:
 
 ```bash
 # A) point PYTHONPATH at the installed skill
-export PYTHONPATH="$HOME/.claude/skills/discover:$PYTHONPATH"
+export PYTHONPATH="$HOME/.claude/skills/tech-intel:$PYTHONPATH"
 # B) or copy just the engine (the `core/` package is stdlib-only) into your repo
 ```
 
@@ -26,8 +26,8 @@ names below (`yourproj.*`) are placeholders for *your* modules.
 > wrappers and config touch this public engine.
 
 ```python
-# yourproj/discover_embed.py
-from core.pipeline import DiscoverPipeline, PipelineConfig
+# yourproj/tech_intel_embed.py
+from core.pipeline import TechIntelPipeline, PipelineConfig
 from core.adapters import Persona, LintPolicy
 from core.schemas import build_item
 
@@ -87,8 +87,8 @@ def my_persona():
     )
 
 
-def run_discover(*, publish=True):
-    return DiscoverPipeline(
+def run_tech_intel(*, publish=True):
+    return TechIntelPipeline(
         llm=MyLLM(),
         source=MySource(),
         scorer=...,                                   # HeuristicScorer, or your own ranker
