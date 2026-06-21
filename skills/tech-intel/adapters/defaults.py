@@ -24,10 +24,11 @@ def resolve_key(name: str) -> str:
         return val
     path = os.path.expanduser("~/.pikiloom/skills.env")
     try:
-        for line in open(path):
-            s = line.strip()
-            if s.startswith(f"{name}=") and not s.startswith("#"):
-                return s.split("=", 1)[1].strip().strip('"').strip("'")
+        with open(path) as f:
+            for line in f:
+                s = line.strip()
+                if s.startswith(f"{name}=") and not s.startswith("#"):
+                    return s.split("=", 1)[1].strip().strip('"').strip("'")
     except OSError:
         pass
     return ""

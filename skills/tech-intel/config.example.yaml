@@ -1,30 +1,96 @@
-# tech-intel — example run config. Copy + edit; pass with `run.py --config`.
+# tech-intel — DEFAULT run config. run.py reads this unless you pass --config.
+# Ships the analyst-digest defaults: an internalized first-person voice (no in-text
+# attribution), related items fused into synthesized takes, Twitter-friendly blank-line
+# blocks, a headed report, and a tone scrub. Override anything below.
 
-# How many of each content type to aim for (keys must match persona.content_types).
+# ── source ──────────────────────────────────────────────────────────────────────
+# Default is the file source (run.py --items <jsonl>). To collect FRESH from an X
+# List + search instead, uncomment this block (needs `pip install playwright` and a
+# logged-in Chrome profile dir):
+# source:
+#   type: twitter-list
+#   profile: "~/.pikiloom/browser/<your-logged-in-profile>"
+#   headless: true
+#   lists: ["1585430245762441216"]            # list URL(s) or bare id(s)
+#   list_rounds: 36
+#   search_queries:
+#     - '(MCP OR "claude code" OR codex OR cursor) min_faves:30 -filter:replies'
+#   search_count_per_query: 15
+#   min_score: 3.0                            # likes*2 + RT*3 + replies + views/100
+#   max_items: 180
+#   enrich_threads: true                      # pull each top item's full thread (depth → better synthesis)
+#   max_threads: 14
+
+# ── draft ───────────────────────────────────────────────────────────────────────
+# content_types MUST match the JSON keys the persona emits. The shipped analyst
+# persona uses the PLURAL keys posts/quotes/replies.
+content_types: [posts, quotes, replies]
 min_per_type:
-  post: 2
-  quote: 3
-  reply: 0
+  posts: 6        # a news feed is mostly standalone localized items
+  quotes: 0       # quotes optional (use for the short one-liner tweets)
+  replies: 0
+target_total: 10       # ask for more; the scope guardrail trims to what's worth it
+hard_min_total: 3      # floor to avoid publishing a thin digest
+shortlist_size: 40     # wider pool so the drafter can skip off-topic and pick in-scope
+dedup: false           # OFF for a once-a-day feed — don't filter out yesterday's still-trending
+                       # tweets as "already summarized". Set true to keep cross-run posted-dedup.
 
-target_total: 5        # 0 = sum(min_per_type)
-hard_min_total: 1      # abort (don't publish) below this many clean outputs
-shortlist_size: 12     # cap candidates handed to the drafter
-
-# LLM (OpenRouter model id). Key resolves from $OPENROUTER_API_KEY or ~/.pikiloom/skills.env.
-model: google/gemini-2.5-pro
-temperature: 0.4
+model: google/gemini-3.1-pro-preview   # strong at the multi-step task (group→merge dup topics→list-all);
+                                       # deepseek/deepseek-chat reads a touch more natural but won't aggregate — swap if you prefer that
+temperature: 0.4       # low = faithful localization, fewer invented phrasings
 reasoning: medium
+# Editorial scope (injected into the draft as a focus directive).
+focus_topics: "大模型 / AI 论文 / AI 新技术与方法 / AI 创业公司与产品 / 开源模型与工具；只收 AI 技术本身，跳过硬件厂商战略·财报·人事（如英伟达布局）、地缘、纯商业八卦"
 
-# Content type buckets the persona emits (JSON keys in the LLM response).
-content_types: [post, quote, reply]
+# ── report layout ───────────────────────────────────────────────────────────────
+# headed: one "# <section title>" per type, each item under "### N. @author — url".
+report_style: headed
+section_titles:
+  posts: "今日 AI 资讯"
+  quotes: "简讯"
+  replies: "适合回复的推文"
 
-# Lint guardrail. Structural checks (unsourced numbers/handles, dropped negation,
-# thin content) are always on. These lexical lists are project-specific — keep
-# your real banned-phrase list private; these are a small neutral illustration.
+# ── lint guardrail ──────────────────────────────────────────────────────────────
 lint:
-  banned_phrases: ["game-changer", "revolutionary", "blazing fast", "10x your"]
-  first_person_markers: ["we're excited", "we are thrilled", "我们的产品", "我们刚刚"]
-  max_line_chars: 60
-  require_source_trace: true
+  # marketing / 八股 attitude words → DROP the whole piece (signals low quality)
+  banned_phrases: ["重磅","王炸","神器","颠覆","震撼","炸裂","遥遥领先","赋能","抓手","底层逻辑","值得关注","强烈推荐","洗牌市场","最高解法","工程红利区","比预期快","证明壁垒降低"]
+  first_person_markers: []   # the analyst voice is first-person; do not ban it
+  # 江湖气 / 老登腔 → REWRITE in place (keep the good piece, drop the tonal noise).
+  # Longer keys win over stems; catches variants (死磕题, 死磕良率).
+  scrub_replacements:
+    老兵: "资深从业者"
+    死磕: "攻坚"
+    撒币补贴: "大额补贴"
+    撒币: "大额补贴"
+    降维接管: "直接取代"
+    降维打击: "压制式竞争"
+    吞噬: "蚕食"
+    神仙打架: "头部之间的竞争"
+    杀疯了: "表现强势"
+    炸场: "引发关注"
+    屠戮: "大幅领先"
+    屠榜: "登顶"
+    吊打: "明显胜过"
+    秒杀: "明显快过"
+    硬刚: "正面竞争"
+    拉爆: "大幅拉开"
+    干碎: "击穿"
+    内卷: "同质化竞争"
+    刻舟求剑: "用旧框架套新局面"
+  max_line_chars: 200        # prose lines are longer now (this check is a soft warn anyway)
+  # OFF for 仿写: faithful localization rewrites numbers into natural Chinese units
+  # (10B→100亿, 1.2K→1200) which a literal source-trace would wrongly flag. The source
+  # is a vetted tweet and the prompt strictly forbids inventing numbers. banned_phrases
+  # + scrub still run. Set true (+ trace_scope) if you draft from raw/unvetted sources.
+  require_source_trace: false
+  trace_scope: corpus
   min_post_chars: 30
   min_quote_chars: 15
+
+# ── publish ─────────────────────────────────────────────────────────────────────
+# Feishu sink (run.py --feishu, or set enabled: true). Needs FEISHU_APP_ID/SECRET/RECEIVE_ID;
+# the app needs docx:document + im:message:send_as_bot.
+feishu:
+  enabled: false
+  folder_token: ""
+  title: "AI 资讯日报"

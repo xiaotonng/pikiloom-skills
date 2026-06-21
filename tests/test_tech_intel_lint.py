@@ -142,5 +142,61 @@ class LintOutputsTests(unittest.TestCase):
         self.assertIn("unsourced:number:900%", outputs[1]["lint_errors"])
 
 
+class ScrubTests(unittest.TestCase):
+    """Deterministic tone rewrite (cyber-chou's _soften/_humanize, generalized)."""
+
+    def test_rewrites_variants_and_prefers_longer_keys(self):
+        repl = {"死磕": "攻坚", "降维接管": "直接取代", "降维": "跨层"}
+        self.assertEqual(lint.scrub_text("死磕良率问题", repl), "攻坚良率问题")   # variant caught
+        self.assertEqual(lint.scrub_text("正在降维接管市场", repl), "正在直接取代市场")  # compound wins over stem
+
+    def test_empty_or_no_map_is_noop(self):
+        self.assertEqual(lint.scrub_text("老兵死磕", {}), "老兵死磕")
+        self.assertEqual(lint.scrub_text("", {"a": "b"}), "")
+
+
+class TraceScopeTests(unittest.TestCase):
+    """corpus scope lets a synthesized piece pull a fact from a *related* item it
+    fused; a fact present in NO collected item is still dropped."""
+
+    LOOKUP = {
+        "s1": {"text": SRC_CLEAN},
+        "s2": {"text": "Independent benchmark showed a 900% throughput gain on the new kernel."},
+    }
+    # 900% lives only in s2; this output is keyed to s1
+    OUT = [{"source_id": "s1", "content_type": "post",
+            "text": "The throughput jump was a full 900% over baseline.\nNumbers worth a second look."}]
+
+    def test_item_scope_drops_a_cross_item_fact(self):
+        out = [dict(self.OUT[0])]
+        lint.lint_outputs(out, self.LOOKUP, LintPolicy(trace_scope="item"))
+        self.assertFalse(out[0]["lint_passed"])
+
+    def test_corpus_scope_lets_it_trace(self):
+        out = [dict(self.OUT[0])]
+        lint.lint_outputs(out, self.LOOKUP, LintPolicy(trace_scope="corpus"))
+        self.assertTrue(out[0]["lint_passed"])
+
+    def test_corpus_scope_still_catches_fabrication(self):
+        # 777000 is in NO collected item → fabrication, dropped even under corpus scope
+        out = [{"source_id": "s1", "content_type": "post",
+                "text": "Benchmarks hit 777000x over baseline here.\nStill checking the rig today."}]
+        lint.lint_outputs(out, self.LOOKUP, LintPolicy(trace_scope="corpus"))
+        self.assertFalse(out[0]["lint_passed"])
+
+    def test_corpus_scope_does_not_force_negation_from_unrelated_items(self):
+        # negation is checked vs the item's OWN source, not the corpus: an unrelated
+        # item's "NOT" must not force every other draft to carry a negation.
+        lookup = {
+            "s1": {"text": "Latency is now 390ms on the M2 chip."},          # no negation
+            "s2": {"text": "RunWild does NOT support Windows yet."},          # has a negation
+        }
+        out = [{"source_id": "s1", "content_type": "post",
+                "text": "Latency is now down to 390ms on the M2 chip.\nA result worth a second look."}]
+        lint.lint_outputs(out, lookup, LintPolicy(trace_scope="corpus"))
+        self.assertTrue(out[0]["lint_passed"])  # not dropped for missing_negation
+        self.assertNotIn("negation:missing_negation", out[0]["lint_errors"])
+
+
 if __name__ == "__main__":
     unittest.main()

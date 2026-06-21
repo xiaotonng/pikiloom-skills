@@ -49,10 +49,13 @@ def render_items_block(items: list[Item]) -> str:
             entry += f"\n  reference_urls: {json.dumps(refs, ensure_ascii=False)}"
         text = str(row.get("text", "") or "").strip()
         if text:
-            entry += f"\n  text: {text[:1200]}"
+            entry += f"\n  text: {text[:2500]}"
         ctx = str(row.get("context_text", "") or "").strip()
         if ctx and ctx != text:
-            entry += f"\n  context_text: {ctx[:1200]}"
+            # generous cap: the full tweet + entire thread now live here (a long
+            # "10 projects" thread can be several KB) — it must reach the drafter
+            # intact so it can write the long-form item without dropping items
+            entry += f"\n  context_text: {ctx[:8000]}"
         parts.append(entry)
     return "\n\n".join(parts)
 
@@ -178,13 +181,53 @@ def _topics_from_items(items: list[Item]) -> list[str]:
     return topics[:30]
 
 
-def build_report(outputs: list[Output], content_types: tuple[str, ...]) -> str:
-    lines = ["# Tech-Intel Report", ""]
+def build_report(
+    outputs: list[Output],
+    content_types: tuple[str, ...],
+    *,
+    style: str = "buckets",
+    section_titles: dict[str, str] | None = None,
+    title: str = "Tech-Intel Report",
+) -> str:
+    """Render the report.
+
+    - ``buckets`` (default): one ``## <type> (N)`` section per content type, items
+      stacked with their link. Generic and self-describing.
+    - ``headed``: one ``# <section title>`` per content type, each item under a
+      ``### N. @author — url`` heading. Matches a per-source briefing layout.
+
+    ``section_titles`` maps a content type to its display heading (e.g.
+    ``{"posts": "适合发帖的新闻内容"}``) — keep project-specific wording in config,
+    not in this generic engine."""
+    titles = section_titles or {}
+    if style == "headed":
+        sections: list[str] = []
+        for ct in content_types:
+            bucket = [o for o in outputs if str(o.get("content_type", "")) == ct]
+            if not bucket:
+                continue
+            lines = [f"# {titles.get(ct, ct)}", ""]
+            for idx, o in enumerate(bucket, 1):
+                author = str(o.get("author", "") or "").strip().lstrip("@")
+                url = str(o.get("url", "") or "").strip()
+                head = f"### {idx}."
+                if author:
+                    head += f" @{author}"
+                if url:
+                    head += f" — {url}"
+                lines.append(head)
+                lines.append("")
+                lines.append(str(o.get("text", "") or "").strip())
+                lines.append("")
+            sections.append("\n".join(lines).strip())
+        return ("\n\n".join(s for s in sections if s)).strip() + "\n"
+
+    lines = [f"# {title}", ""]
     for ct in content_types:
         bucket = [o for o in outputs if str(o.get("content_type", "")) == ct]
         if not bucket:
             continue
-        lines.append(f"## {ct} ({len(bucket)})")
+        lines.append(f"## {titles.get(ct, ct)} ({len(bucket)})")
         lines.append("")
         for o in bucket:
             lines.append(str(o.get("text", "") or "").strip())

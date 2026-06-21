@@ -28,6 +28,10 @@ class PipelineConfig:
     model: str | None = None
     temperature: float | None = None
     reasoning: str | None = None
+    # report rendering (see generate.build_report)
+    report_style: str = "buckets"                                   # "buckets" | "headed"
+    report_title: str = "Tech-Intel Report"
+    section_titles: dict[str, str] = field(default_factory=dict)    # content_type → display heading
 
     def total_target(self) -> int:
         return max(sum(int(v or 0) for v in self.min_per_type.values()), int(self.target_total or 0))
@@ -108,6 +112,11 @@ class TechIntelPipeline:
             run_id=run_id,
         )
 
+        # ── scrub: deterministic tone rewrite (cringe/江湖气 → plain) before lint ──
+        if self.lint_policy.scrub_replacements:
+            for o in outputs:
+                o["text"] = lint.scrub_text(str(o.get("text", "") or ""), self.lint_policy.scrub_replacements)
+
         # ── lint: drop hard-failed items, enforce the floor ──
         lookup = {str(i.get("source_id", "")).strip(): i for i in shortlist}
         lint.lint_outputs(outputs, lookup, self.lint_policy)
@@ -121,7 +130,13 @@ class TechIntelPipeline:
             )
         outputs = clean
 
-        report_md = generate.build_report(outputs, self.persona.content_types)
+        report_md = generate.build_report(
+            outputs,
+            self.persona.content_types,
+            style=self.config.report_style,
+            section_titles=self.config.section_titles,
+            title=self.config.report_title,
+        )
         meta = {
             "run_id": run_id,
             "collected": len(items),
