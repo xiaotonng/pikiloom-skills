@@ -5,8 +5,10 @@ description: Generate or edit images with OpenAI gpt-image-2 — text-to-image a
 
 # image-gen — gpt-image-2 image generation (atomic capability)
 
-A self-contained wrapper around OpenAI's `gpt-image-2` Images API. Pure Python stdlib — no
-`pip install`, no venv. Two modes, auto-selected by whether you pass `--ref`:
+A self-contained wrapper for `gpt-image-2`. Pure Python stdlib — no `pip install`, no venv.
+Runs through **either** provider, auto-picked by your key (override with `--provider`): OpenAI's
+native Images API directly, or OpenRouter's chat-completions image output (`openai/gpt-5.4-image-2`
+is the same GPT Image 2 backend). Two modes, auto-selected by whether you pass `--ref`:
 
 - **text-to-image** — prompt only → `/v1/images/generations`.
 - **image-to-image / edit** — one or more `--ref` images → `/v1/images/edits`. Use a reference to
@@ -25,24 +27,37 @@ python3 ~/.claude/skills/image-gen/scripts/image_gen.py \
   [--quality high]                   # low | medium | high (default) | auto
   [--background transparent]         # transparent | opaque | auto  (PNG)
   [--model gpt-image-2]              # see Models
+  [--provider openrouter]            # auto (default) | openai | openrouter
 ```
 
 Always saves PNG file(s). With `--n>1`, files get `_1.._N` suffixes. To show the result to a user,
 `Read` the PNG (and/or `open` it on macOS). The caller decides where `--out` lives — for throwaway
 exploration use a gitignored scratch dir.
 
-## API key
+## API key & provider
 
-Resolved in order: `--api-key` → `$OPENAI_API_KEY` → `--env-file <dotenv>` → `$IMAGE_GEN_ENV_FILE`
-→ `~/.pikiloom/skills.env`. The simplest setup is one line in `~/.pikiloom/skills.env`:
+Pick the provider by the key you supply (first hit wins): `--api-key` (+`--provider`) →
+`OPENAI_API_KEY` (→ openai) → `OPENROUTER_API_KEY` (→ openrouter), each read from env →
+`--env-file <dotenv>` → `$IMAGE_GEN_ENV_FILE` → `~/.pikiloom/skills.env`.
 
 ```bash
-echo 'OPENAI_API_KEY=sk-...' >> ~/.pikiloom/skills.env
+echo 'OPENAI_API_KEY=sk-...'        >> ~/.pikiloom/skills.env   # direct OpenAI (native Images API)
+echo 'OPENROUTER_API_KEY=sk-or-...' >> ~/.pikiloom/skills.env   # via OpenRouter (one key for every skill)
 ```
 
-> Use a **DIRECT** OpenAI key (`sk-...` / `sk-svcacct-...`), **not** an OpenRouter key: this wrapper
-> calls OpenAI's native Images API (`/v1/images/*`), which OpenRouter doesn't expose (it does image
-> generation via `/chat/completions` image output). gpt-image-2 needs the direct key.
+- **Direct OpenAI** (`sk-...` / `sk-svcacct-...`) hits the native Images API (`/v1/images/*`): full
+  `--quality`, `--background transparent`, native `--n`, and the sharpest text rendering.
+- **OpenRouter** (`sk-or-...`, or `--provider openrouter`) routes through `/chat/completions`
+  (`modalities:["image"]`); `--size` → `image_config.aspect_ratio`, `--n` loops, `--quality` /
+  `--background` don't apply. With the **default** model it tries the best first and **falls back**
+  on failure: `gpt-image-2` (`openai/gpt-5.4-image-2`, same backend — best for text/logos) →
+  `google/gemini-3-pro-image` → `google/gemini-2.5-flash-image`. **OpenAI image models 404 unless your
+  OpenRouter data policy allows them** — toggle <https://openrouter.ai/settings/privacy>; the
+  non-OpenAI backups work without it, and the CLI prints a `NOTE` to stderr whenever it fell back.
+  Pin one model (no fallback) with an explicit `--model <slug>`; override the chain with
+  `IMAGE_GEN_OPENROUTER_FALLBACK="slug1,slug2,…"`.
+- With **both** keys set, `--provider auto` prefers the direct OpenAI path (best fidelity); pass
+  `--provider openrouter` to force the router.
 
 ## Prompting tips (these matter a lot)
 
@@ -60,6 +75,9 @@ echo 'OPENAI_API_KEY=sk-...' >> ~/.pikiloom/skills.env
 
 `gpt-image-2` (default, best) · `gpt-image-2-2026-04-21` (pinned snapshot) · `gpt-image-1.5` ·
 `gpt-image-1` · `gpt-image-1-mini` (cheapest/fastest, good for drafts). Override with `--model`.
+Under `--provider openrouter` the default `gpt-image-2` walks the fallback chain
+(`openai/gpt-5.4-image-2` → `google/gemini-3-pro-image` → `google/gemini-2.5-flash-image`); pass an
+explicit slug (e.g. `google/gemini-2.5-flash-image`, `black-forest-labs/flux.2-pro`) to pin one model.
 
 ## Cost / time
 

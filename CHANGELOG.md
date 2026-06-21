@@ -14,6 +14,20 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `npx skills add xiaotonng/pikiloom-skills --skill tech-intel …`.
 
 ### Added
+- **image-gen: optional OpenRouter provider with a gpt-image-2-first fallback chain (one key can
+  cover every skill).** New `--provider {auto,openai,openrouter}`. With an `OPENROUTER_API_KEY` (or an
+  `sk-or-…` `--api-key`) the skill routes image generation through OpenRouter's `/chat/completions`
+  image output: `--ref` images are inlined as base64 data URLs, `--size` → `image_config.aspect_ratio`,
+  `--n` loops one call per image. The **default model walks a quality-ordered chain, best first**:
+  `gpt-image-2` (`openai/gpt-5.4-image-2`, the **same GPT Image 2 backend** — top for text/logos) →
+  `google/gemini-3-pro-image` → `google/gemini-2.5-flash-image`; on any failure (e.g. the data-policy
+  404) it falls back to the next and prints a `NOTE`. Override the chain with
+  `IMAGE_GEN_OPENROUTER_FALLBACK="slug,…"`, or pin a single model (no fallback) with an explicit
+  `--model <slug>`. `auto` still prefers a **direct** `OPENAI_API_KEY` (native Images API — best text
+  fidelity, plus `--quality` / transparent / native `--n`) when present, so existing behaviour is
+  unchanged. NOTE: OpenAI image models return **404** on OpenRouter unless allowed in your data policy
+  (`openrouter.ai/settings/privacy`); the non-OpenAI backups need no opt-in. Adds 15 offline tests
+  (provider/key selection, model-alias mapping, size→aspect, fallback-chain ordering).
 - **tech-intel: Chinese AI-news 仿写 digest is the default.** The shipped `config.example.yaml` +
   `prompts/*.example.md` produce a top Chinese AI-news blogger voice (宝玉 / 歸藏 style): each
   already-high-engagement English tweet/thread is **faithfully 仿写'd (localized rewrite, not literal

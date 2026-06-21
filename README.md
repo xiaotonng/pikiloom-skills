@@ -11,7 +11,7 @@ secrets.
 
 | Skill | What it does | Keys (optional unless noted) |
 |-------|--------------|------------------------------|
-| **image-gen** | Generate / edit images with OpenAI `gpt-image-2` (text-to-image + reference/edit). Pure stdlib, no installs. | `OPENAI_API_KEY` (**required**, *direct OpenAI — not OpenRouter*) |
+| **image-gen** | Generate / edit images with `gpt-image-2` (text-to-image + reference/edit). Pure stdlib, no installs. | `OPENAI_API_KEY` (direct OpenAI, best fidelity) **or** `OPENROUTER_API_KEY` (one key for every skill; tries `gpt-image-2` first, then non-OpenAI backups) |
 | **video-use** | Record a web app (Playwright) → cut filler → zoom → burn subtitles → optional voiceover. Self-contained venv. | `OPENROUTER_API_KEY` (voiceover only; subtitles need none) |
 | **tech-intel** | Signal pipeline: collect → score → draft (1 LLM call) → **lint guardrail** → publish. Ships a **Chinese AI-news 仿写 default** (宝玉/歸藏-style faithful localized rewrite of high-engagement EN tweets). File-in/file-out, or collect fresh from an X List (Playwright) → Feishu. | `OPENROUTER_API_KEY` (draft; default model `deepseek/deepseek-chat`); `FEISHU_*` (sink); `playwright` (X-List source) |
 
@@ -45,9 +45,14 @@ chmod 600 ~/.pikiloom/skills.env
 # then fill in only the keys you need (see comments in the file)
 ```
 
-- **image-gen** needs a **direct** OpenAI key (`sk-…` / `sk-svcacct-…`): it calls OpenAI's
-  native Images API (`/v1/images/*`), which OpenRouter doesn't expose (OpenRouter does image
-  generation through `/chat/completions` image output) — so a router key won't work here.
+- **image-gen** works through either provider. A **direct** OpenAI key (`sk-…` / `sk-svcacct-…`)
+  drives the native Images API (`/v1/images/*`) — best text fidelity, full `--quality` / transparent
+  / native `--n`. Or an **OpenRouter** key (`sk-or-…`, `--provider openrouter`) routes through
+  `/chat/completions`, so one key can cover every skill: it **tries `gpt-image-2` first**
+  (`openai/gpt-5.4-image-2` — the same backend, best for text/logos) and, on failure, **falls back**
+  through `google/gemini-3-pro-image` → `google/gemini-2.5-flash-image`. OpenAI image models 404 until
+  you allow them in your data policy (`openrouter.ai/settings/privacy`) — the non-OpenAI backups need
+  no opt-in. Pin a single model (no fallback) with an explicit `--model <slug>`.
 - **video-use** voiceover uses an OpenRouter `gpt-audio` key; the subtitle path needs
   no key at all (and `--engine say` is a macOS zero-key voiceover fallback).
 - **tech-intel** uses an OpenRouter key for the draft step. To publish to Feishu (a doc +
@@ -93,7 +98,7 @@ The suite is stdlib `unittest` — no dependencies, no API key, no network:
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-73 tests cover all three skills, including the tech-intel lint guardrail (run both in
+88 tests cover all three skills, including the tech-intel lint guardrail (run both in
 isolation and end-to-end). CI runs them plus the zero-key demo on Python 3.10–3.13.
 Details and the per-file coverage table: [TESTING.md](./TESTING.md).
 
