@@ -1,24 +1,47 @@
-{{FOCUS_DIRECTIVE}}You are given {{TOP_N}} candidate items below. Select the best and
-draft content for each selected item.
+下面是今天采集到的 {{TOP_N}} 条候选（英文原推，很多带 thread）。这些都是已经获得高关注的优质内容。
 
-## How many to produce
-- Aim for about {{TARGET_TOTAL}} items total.
-- At minimum: {{MIN_POST}} posts and {{MIN_QUOTE}} quotes.
-- If fewer than {{HARD_MIN_TOTAL}} items clear your quality bar, produce fewer —
-  never pad with weak or unrelated items.
+从里面挑出 {{TARGET_TOTAL}} 条**具体的技术资讯**，每条**仿写成一条中文推**。posts 是主体，quotes 放更短的单条，replies 空着。
+硬下限 {{HARD_MIN_TOTAL}} 条（posts ≥ {{MIN_POSTS}}，quotes ≥ {{MIN_QUOTES}}）。宁缺毋滥。
 
-## How to draft each item
-- `post`: a standalone summary of one item. First line = who/what + what happened;
-  following lines = one concrete fact each (a number, capability, limit). Put the
-  main link on its own final line.
-- `quote`: a one-or-two-line take that adds a single specific point on top of the
-  source (the source link is implicit).
-- Every fact you write MUST be traceable to the candidate's `text` / `context_text`
-  / `reference_content`. Do not introduce numbers or @handles that are not there.
+⚠️ **【先做这一步：聚合 + 规划】** 先把 {{TOP_N}} 条候选扫一遍，**按"讲的是不是同一件事"分组**。
+- **同一件事 / 同一个模型的多条 → 必须合并成一条**：把这些推（和它们的 thread）里**所有不同的事实、数字、角度**收进一条里，写成一条信息很全的长推。比如今天某个新模型刷屏、有七八条在讲它——合并成 1 条，涵盖：它是什么、评测分数、价格、怎么部署、实测体感。**这是把分散的事实聚到一起，不是加你的判断或格局**。
+- 合并完，让最终 {{TARGET_TOTAL}} 条覆盖**尽量多的不同主题**，绝不让同一个东西占多条。同一作者只取一条。
+- 规划好这 {{TARGET_TOTAL}} 条分别讲哪 {{TARGET_TOTAL}} 件不同的事，再动笔。
 
-## Candidates
+{{FOCUS_DIRECTIVE}}
+
+## 选什么
+✅ 只选具体技术资讯：新模型 / 新版本（能力·评测·价格·参数）、新工具 / 开源项目、论文 / 新方法、带数字的实测、官方发布。
+❌ 跳过：纯观点 / 预测 / 站队 / 排行榜口水（"X 已是全球前三""谁会赢""谁缺算力"这种 hot take）、硬件厂商战略 / 财报 / 人事（英伟达布局、谁挖谁）、地缘、商业八卦、广告、非 AI 的 crypto / web3、没有具体信息的。再高赞也不要——只要那种"讲清楚了一个具体技术/产品/论文是什么"的。
+
+## 怎么仿写每一条
+- **不是翻译，是用中文重写。** 用一个中文 AI 资讯博主的口吻把它讲出来，地道、自然、没有翻译腔。
+- **把全部内容读完再写**：每条候选的 `text` + `context_text` 里可能有这条推的**完整全文 + 整个 thread**（用 `\n---\n` 分隔的多段就是 thread 的连续多条）。**必须把这些料都用上**，别只看开头第一句就总结——那样会漏掉一大半信息，写出来很单薄。
+- **忠实**：原推的事实、数字、版本、结论、立场全保留，照原文；原推没有的不加；不加你自己的点评和宏大判断。
+- **第一句是导语**（最重要的信息）。
+
+## 长度：必须有长有短（重要）
+**不要把每条都写成一两句短讯。** 看每条 `text` + `context_text`（含 thread）里有多少料，料多就写长写透：
+- 短源（一句话公告）→ 1–2 句。
+- 有几个要点的发布 / 工具 → 3–5 句。
+- thread / 带条目的列表 / 有数据和细节的发布说明或论文 → **写成完整长文，多段或要点列表，把每个点都讲到**。原推列了 10 个项目，你就把 10 个都写出来，不许"其他未展开"。
+一份日报里要长短搭配。长的同样要地道好读、不注水，每句都有原推里的实质信息。
+
+参考语感（宝玉 / 歸藏，别照抄）：
+- 短："Claude 刚把所有套餐的 5 小时和每周用量限制重置了，现在能放开用。"
+- 长（thread / 列表 → 完整列出）：
+  "盘点 10 个好用到不该免费的开源项目：
+
+  - Recordly：开源版 Screen Studio，自动变焦、平滑光标、摄像头叠加，不用剪辑就能出专业演示视频。
+  - （把 thread 里其余 9 个都按这样列出来，每个一句讲清是什么、解决什么）"
+
+## 硬约束（违反会被丢弃）
+- 数字 / 版本 / 价格 / 评测口径 / 公司产品名照原文，不编、不改单位币种、不漏多方。
+- 否定词保留（原文 not/never/没有 → 中文保留否定）。
+- 正文不出现人名 / handle / "据 X"。每个事实能在原推 / thread 找到锚点。
+
+## 候选
 {{ITEMS_BLOCK}}
 
-## Output
-Return ONE raw JSON object as specified in the system prompt — keys `post`, `quote`,
-`reply`, each a list of `{ "source_id", "text" }`. Nothing else.
+## 输出
+一个 JSON：posts / quotes / replies，每条 `{"source_id","text"}`。第一个字符 `{`，最后一个字符 `}`，不要用代码块包裹。

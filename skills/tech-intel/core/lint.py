@@ -30,6 +30,21 @@ def _normalize(text: str) -> str:
     return re.sub(r"\s+", " ", (text or "").lower())
 
 
+def scrub_text(text: str, replacements: dict[str, str] | None) -> str:
+    """Deterministic pre-lint rewrite: swap cheap cringe / 江湖气 / 老登 vocabulary
+    for plain wording (e.g. 死磕→攻坚, 撒币→大额补贴). Substring replace, so it
+    catches variants (死磕题, 死磕良率). Longer keys are applied first so a
+    compound (降维打击) wins over its stem. Rewriting beats dropping — it keeps an
+    otherwise-good synthesized piece while removing the tonal noise."""
+    out = text or ""
+    if not out or not replacements:
+        return out
+    for src in sorted(replacements, key=len, reverse=True):
+        if src:
+            out = out.replace(src, str(replacements[src]))
+    return out
+
+
 def extract_numbers(text: str) -> list[str]:
     """Fact-bearing numeric tokens (%, 倍, $, units, versions). Ignores numbers
     inside URLs / @handles (usually status ids)."""
@@ -171,8 +186,17 @@ def detect_link_position(text: str, *, content_type: str) -> list[str]:
     return issues
 
 
-def lint_item(item: dict, source_blob: str, policy: LintPolicy) -> tuple[bool, list[str], list[str]]:
-    """Return (passed, hard_errors, soft_warnings). Hard → drop; soft → log only."""
+def lint_item(
+    item: dict, source_blob: str, policy: LintPolicy, *, trace_blob: str | None = None
+) -> tuple[bool, list[str], list[str]]:
+    """Return (passed, hard_errors, soft_warnings). Hard → drop; soft → log only.
+
+    ``source_blob`` is the output's OWN source (used for negation-preservation —
+    stance must match the item it's keyed to). ``trace_blob`` is what the
+    unsourced-number/handle check traces against; under corpus scope it's the
+    whole collected corpus (so a synthesized piece may pull a fact across items),
+    defaulting to ``source_blob``. Keeping negation per-item avoids a corpus full
+    of unrelated "not"s forcing a negation into every draft."""
     text = str(item.get("text", "") or "").strip()
     if not text:
         return False, ["empty"], []
@@ -187,10 +211,10 @@ def lint_item(item: dict, source_blob: str, policy: LintPolicy) -> tuple[bool, l
         if marker and marker in text:
             hard.append(f"first_person:{marker}")
     if policy.require_source_trace:
-        unsourced = detect_unsourced_entities(text, source_blob)
+        unsourced = detect_unsourced_entities(text, trace_blob if trace_blob is not None else source_blob)
         if unsourced:
             hard.append("unsourced:" + ",".join(unsourced))
-        neg = detect_negation_drop(text, source_blob)
+        neg = detect_negation_drop(text, source_blob)  # negation: vs the item's OWN source only
         if neg:
             hard.append("negation:" + ",".join(neg))
     thin = detect_thin_content(text, content_type=content_type, policy=policy)
@@ -212,18 +236,28 @@ def lint_item(item: dict, source_blob: str, policy: LintPolicy) -> tuple[bool, l
 
 
 def lint_outputs(outputs: list[dict], source_lookup: dict[str, dict], policy: LintPolicy) -> list[dict]:
-    """Enrich each output with lint_passed / lint_errors / lint_warnings (in place)."""
+    """Enrich each output with lint_passed / lint_errors / lint_warnings (in place).
+
+    With ``policy.trace_scope == "corpus"`` the anti-fabrication trace runs against
+    the union of ALL collected items (not just the output's own source), so a
+    synthesized piece may legitimately pull a number/handle from a related item it
+    fused in — a fact present in NO collected item is still dropped."""
+    corpus = ""
+    if str(getattr(policy, "trace_scope", "item")) == "corpus":
+        corpus = " ".join(
+            f"{src.get('text', '') or ''} {src.get('context_text', '') or ''}"
+            for src in source_lookup.values()
+        )
     for o in outputs:
         sid = str(o.get("source_id", "")).strip()
         src = source_lookup.get(sid, {})
-        blob = " ".join(
-            [
-                str(src.get("text", "") or ""),
-                str(src.get("context_text", "") or ""),
-                str(o.get("source_text", "") or ""),
-            ]
+        # item's OWN source — negation stance is checked against this
+        item_blob = " ".join(
+            [str(src.get("text", "") or ""), str(src.get("context_text", "") or ""), str(o.get("source_text", "") or "")]
         )
-        passed, hard, soft = lint_item(o, blob, policy)
+        # trace blob for unsourced numbers/handles — adds the corpus under corpus scope
+        trace_blob = f"{item_blob} {corpus}" if corpus else item_blob
+        passed, hard, soft = lint_item(o, item_blob, policy, trace_blob=trace_blob)
         o["lint_passed"] = passed
         o["lint_errors"] = hard
         o["lint_warnings"] = soft

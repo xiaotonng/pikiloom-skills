@@ -114,9 +114,11 @@ class LintPolicy:
 
     banned_phrases: tuple[str, ...] = ()      # hard-drop if present (marketing fluff etc.)
     first_person_markers: tuple[str, ...] = ()  # hard-drop: brand-voice leakage when writing 3rd-person
+    scrub_replacements: dict[str, str] = field(default_factory=dict)  # deterministic pre-lint rewrites: {bad: good} substring swaps (e.g. 死磕→攻坚) — rewrite cheap cringe instead of dropping a good piece
     max_line_chars: int = 60                  # soft warn above this
     enforce_link_last: bool = True            # soft warn if main link isn't the last line
     require_source_trace: bool = True         # hard-drop numbers/@handles absent from source
+    trace_scope: str = "item"                 # "item": trace vs the output's own source; "corpus": vs ALL collected items — lets a synthesized piece pull facts across sources while still blocking fabrication
     min_post_chars: int = 30
     min_quote_chars: int = 15
     extra: dict[str, Any] = field(default_factory=dict)

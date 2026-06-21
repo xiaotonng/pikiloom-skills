@@ -1,3 +1,5 @@
 # Core has no hard deps (stdlib only). These are for the reference adapters / runner:
 pyyaml>=6.0      # run.py config loading
-requests>=2.32   # OpenRouterLLM adapter
+requests>=2.32   # OpenRouterLLM adapter + FeishuPublisher
+# playwright>=1.40  # ONLY for the twitter-list source (fresh collection); needs a
+#                   # logged-in Chrome profile. Install on demand: pip install playwright

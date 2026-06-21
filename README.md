@@ -13,7 +13,7 @@ secrets.
 |-------|--------------|------------------------------|
 | **image-gen** | Generate / edit images with OpenAI `gpt-image-2` (text-to-image + reference/edit). Pure stdlib, no installs. | `OPENAI_API_KEY` (**required**, *direct OpenAI — not OpenRouter*) |
 | **video-use** | Record a web app (Playwright) → cut filler → zoom → burn subtitles → optional voiceover. Self-contained venv. | `OPENROUTER_API_KEY` (voiceover only; subtitles need none) |
-| **tech-intel** | Embeddable signal pipeline: collect → score → draft (1 LLM call) → **lint guardrail** → publish. Runs file-in/file-out; plug in your own source/voice/sink. | `OPENROUTER_API_KEY` (LLM draft) |
+| **tech-intel** | Signal pipeline: collect → score → draft (1 LLM call) → **lint guardrail** → publish. Ships a **Chinese AI-news 仿写 default** (宝玉/歸藏-style faithful localized rewrite of high-engagement EN tweets). File-in/file-out, or collect fresh from an X List (Playwright) → Feishu. | `OPENROUTER_API_KEY` (draft; default model `deepseek/deepseek-chat`); `FEISHU_*` (sink); `playwright` (X-List source) |
 
 **Contents:** [Install](#install) · [Keys](#keys) · [Per-skill setup](#per-skill-setup) · [Repo layout](#repo-layout) · [Tests](#tests) · [Contributing](#contributing)
 
@@ -50,8 +50,12 @@ chmod 600 ~/.pikiloom/skills.env
   generation through `/chat/completions` image output) — so a router key won't work here.
 - **video-use** voiceover uses an OpenRouter `gpt-audio` key; the subtitle path needs
   no key at all (and `--engine say` is a macOS zero-key voiceover fallback).
-- **tech-intel** uses an OpenRouter key for the draft step; its Feishu/Slack-style sink
-  credentials are only needed if you wire that publisher (see `skills/tech-intel/EMBEDDING.md`).
+- **tech-intel** uses an OpenRouter key for the draft step. To publish to Feishu (a doc +
+  a card) pass `--feishu` and set `FEISHU_APP_ID/SECRET/RECEIVE_ID` (the app needs the
+  `docx:document` and `im:message:send_as_bot` scopes). These resolve **`skills.env`-first**,
+  not env-first like other keys: a pikiloom host injects its *own* bot's `FEISHU_*` into the
+  process env, so the content-publishing app in your `skills.env` must take precedence
+  (override per-run with `TECH_INTEL_FEISHU_*`). Other sinks: see `skills/tech-intel/EMBEDDING.md`.
 
 Secrets are never committed: `.gitignore` drops `*.env`, and each skill reads keys at
 runtime — none are baked into the scripts. See [SECURITY.md](./SECURITY.md).
@@ -89,7 +93,7 @@ The suite is stdlib `unittest` — no dependencies, no API key, no network:
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-47 tests cover all three skills, including the tech-intel lint guardrail (run both in
+73 tests cover all three skills, including the tech-intel lint guardrail (run both in
 isolation and end-to-end). CI runs them plus the zero-key demo on Python 3.10–3.13.
 Details and the per-file coverage table: [TESTING.md](./TESTING.md).
 

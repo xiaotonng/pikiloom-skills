@@ -113,5 +113,33 @@ class ResolveKeyTests(unittest.TestCase):
         self.assertEqual(resolve_key("DEFINITELY_NOT_SET_4Q7X"), "")
 
 
+class BuildReportTests(unittest.TestCase):
+    OUT = [
+        {"content_type": "posts", "author": "foo", "url": "https://x/1", "text": "line a\nline b"},
+        {"content_type": "quotes", "author": "@bar", "url": "https://x/2", "text": "q text"},
+    ]
+
+    def test_buckets_is_default(self):
+        r = generate.build_report(self.OUT, ("posts", "quotes"))
+        self.assertIn("# Tech-Intel Report", r)
+        self.assertIn("## posts (1)", r)
+        self.assertIn("## quotes (1)", r)
+
+    def test_buckets_uses_section_titles(self):
+        r = generate.build_report(self.OUT, ("posts",), section_titles={"posts": "适合发帖"})
+        self.assertIn("## 适合发帖 (1)", r)
+
+    def test_headed_style_numbers_each_item_by_source(self):
+        r = generate.build_report(
+            self.OUT, ("posts", "quotes"), style="headed",
+            section_titles={"posts": "适合发帖的新闻内容", "quotes": "适合引用的新闻推文"},
+        )
+        self.assertIn("# 适合发帖的新闻内容", r)
+        self.assertIn("### 1. @foo — https://x/1", r)
+        self.assertIn("### 1. @bar — https://x/2", r)   # leading @ not doubled
+        self.assertNotIn("Tech-Intel Report", r)         # headed has no overall title
+        self.assertIn("line a\nline b", r)               # item text preserved verbatim
+
+
 if __name__ == "__main__":
     unittest.main()

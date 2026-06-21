@@ -12,14 +12,19 @@ from .defaults import (
     JsonKnowledgeStore,
     resolve_key,
 )
+from .feishu import FeishuPublisher, md_to_feishu_blocks
+from .twitter_list import TwitterListSource
 
 __all__ = [
     "OpenRouterLLM",
     "CannedLLM",
     "FileSource",
+    "TwitterListSource",
     "HeuristicScorer",
     "StdoutPublisher",
     "FilePublisher",
+    "FeishuPublisher",
+    "md_to_feishu_blocks",
     "NullStore",
     "JsonKnowledgeStore",
     "resolve_key",
